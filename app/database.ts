@@ -1,4 +1,5 @@
 import mysql from "mysql2";
+import { Store } from "./api/getStoreById/storeTypes";
 
 // Database connection configuration
 const dbConfig = {
@@ -7,9 +8,6 @@ const dbConfig = {
   password: process.env.NEXT_PUBLIC_MY_SQL_PASSWORD,
   database: process.env.NEXT_PUBLIC_MY_SQL_DATABASE,
 };
-
-console.log("Database configuration:", dbConfig);
-console.log("Environment variables:", process.env);
 
 // Create a connection pool
 const pool = mysql.createPool(dbConfig).promise();
@@ -25,12 +23,30 @@ async function getAllNotes() {
   }
 }
 
-async function getStoreById(store_id: number) {
+/**
+ * Fetches a store from the database by its ID.
+ * @param {number} storeId - The ID of the store to fetch.
+ * @returns {Promise<Store[]>} The fetched store, or an empty array if not found.
+ * @throws {Error} If there is an error while fetching the store.
+ */
+
+/**
+ * Fetches a store from the database by its ID.
+ * @param {number} storeId - The ID of the store to fetch.
+ * @returns {Promise<Store | null>} The fetched store, or null if not found.
+ * @throws {Error} If there is an error while fetching the store.
+ */
+async function getStoreById(storeId: number): Promise<Store | null> {
   try {
-    const [rows] = await pool.query(
-      `SELECT * FROM notes WHERE id = ${store_id}`
-    );
-    return rows;
+    const [rows] = await pool.query("SELECT * FROM notes WHERE id = ?", [
+      storeId,
+    ]);
+    if (Array.isArray(rows)) {
+      const store = rows[0] as Store | null;
+      return store;
+    } else {
+      return null;
+    }
   } catch (error) {
     console.error("Error fetching store by ID:", error);
     throw error;
