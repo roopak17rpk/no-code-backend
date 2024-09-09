@@ -26,13 +26,6 @@ async function getAllNotes() {
 /**
  * Fetches a store from the database by its ID.
  * @param {number} storeId - The ID of the store to fetch.
- * @returns {Promise<Store[]>} The fetched store, or an empty array if not found.
- * @throws {Error} If there is an error while fetching the store.
- */
-
-/**
- * Fetches a store from the database by its ID.
- * @param {number} storeId - The ID of the store to fetch.
  * @returns {Promise<Store | null>} The fetched store, or null if not found.
  * @throws {Error} If there is an error while fetching the store.
  */
