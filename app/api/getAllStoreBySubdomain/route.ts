@@ -11,9 +11,9 @@ import { getAllNotes } from "@/app/database";
 
 export async function POST(req: NextRequest) {
   try {
-    const { subdomain } = await req.json();
+    const { subdomain }: { subdomain: string } = await req.json();
 
-    if (!subdomain || typeof subdomain !== 'string') {
+    if (!subdomain || typeof subdomain !== "string") {
       return NextResponse.json({ error: "Invalid subdomain" }, { status: 400 });
     }
 

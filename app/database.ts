@@ -1,4 +1,4 @@
-import mysql from "mysql2";
+import mysql, { OkPacket, OkPacketParams, ResultSetHeader } from "mysql2";
 import { Store } from "./api/getStoreById/storeTypes";
 
 // Database connection configuration
@@ -60,4 +60,17 @@ async function initializeDatabase() {
 // Initialize the database connection
 initializeDatabase();
 
-export { pool, getAllNotes, getStoreById };
+const createStore = async (title: string, contents: string) => {
+  const [result] = await pool.query<ResultSetHeader>(
+    `
+    INSERT INTO notes (title, contents)
+    VALUES (?, ?)	
+  `,
+    [title, contents]
+  );
+  const newStoreId = result.insertId;
+  const newStoreData = await getStoreById(newStoreId);
+  return newStoreData;
+};
+
+export { pool, getAllNotes, getStoreById, createStore };
