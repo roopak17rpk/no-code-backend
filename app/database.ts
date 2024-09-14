@@ -1,5 +1,11 @@
-import mysql, { OkPacket, OkPacketParams, ResultSetHeader } from "mysql2";
+import mysql, { OkPacket, ResultSetHeader } from "mysql2";
 import { Store } from "./api/getStoreById/storeTypes";
+
+type EditStoreInfoParams = {
+  storeId: number;
+  storeName: string | null;
+  ownerName: string | null;
+};
 
 // Database connection configuration
 const dbConfig = {
@@ -12,17 +18,6 @@ const dbConfig = {
 // Create a connection pool
 const pool = mysql.createPool(dbConfig).promise();
 
-// Function to fetch all notes
-async function getAllNotes() {
-  try {
-    const [rows] = await pool.query("SELECT * FROM notes");
-    return rows;
-  } catch (error) {
-    console.error("Error fetching notes:", error);
-    throw error;
-  }
-}
-
 /**
  * Fetches a store from the database by its ID.
  * @param {number} storeId - The ID of the store to fetch.
@@ -31,7 +26,7 @@ async function getAllNotes() {
  */
 async function getStoreById(storeId: number): Promise<Store | null> {
   try {
-    const [rows] = await pool.query("SELECT * FROM notes WHERE id = ?", [
+    const [rows] = await pool.query("SELECT * FROM storeInfo WHERE id = ?", [
       storeId,
     ]);
     if (Array.isArray(rows)) {
@@ -60,17 +55,68 @@ async function initializeDatabase() {
 // Initialize the database connection
 initializeDatabase();
 
-const createStore = async (title: string, contents: string) => {
-  const [result] = await pool.query<ResultSetHeader>(
-    `
-    INSERT INTO notes (title, contents)
-    VALUES (?, ?)	
-  `,
-    [title, contents]
-  );
-  const newStoreId = result.insertId;
-  const newStoreData = await getStoreById(newStoreId);
-  return newStoreData;
+const createStore = async (
+  storeName: string,
+  storeOwnerInfo: { name: string },
+  storeDomain: string
+) => {
+  try {
+    const [result] = await pool.query<ResultSetHeader>(
+      `
+      INSERT INTO storeInfo (store_name, store_owner_info, store_domain)
+      VALUES (?, ?, ?)	
+    `,
+      [storeName, JSON.stringify(storeOwnerInfo), storeDomain]
+    );
+
+    if (result.affectedRows === 0) {
+      throw new Error("Store creation failed, no rows affected.");
+    }
+
+    const newStoreId = result.insertId;
+    const newStoreData = await getStoreById(newStoreId);
+
+    if (!newStoreData) {
+      throw new Error("Store not found after creation.");
+    }
+
+    return newStoreData;
+  } catch (error) {
+    console.error("Error creating store:", error);
+    throw new Error("An error occurred while creating the store.");
+  }
 };
 
-export { pool, getAllNotes, getStoreById, createStore };
+async function editStoreInfo(params: EditStoreInfoParams) {
+  try {
+    const { storeId, storeName = null, ownerName = null } = params;
+    const updatedOwnerName = ownerName ? JSON.stringify({ name: ownerName }) : null;
+    const [result] = await pool.query<ResultSetHeader>(
+      `
+      UPDATE storeInfo
+      SET
+		   store_name = COALESCE(?, store_name), 
+       store_owner_info = COALESCE(?, store_owner_info)
+      WHERE id = ?
+    `,
+      [storeName, updatedOwnerName, storeId]
+    );
+
+    if (result.affectedRows === 0) {
+      throw new Error("Store update failed, no rows affected.");
+    }
+
+    const updatedStoreData = await getStoreById(storeId);
+
+    if (!updatedStoreData) {
+      throw new Error("Store not found after update.");
+    }
+
+    return updatedStoreData;
+  } catch (error) {
+    console.error("Error updating store info:", error);
+    throw new Error("An error occurred while updating the store info.");
+  }
+}
+
+export { pool, getStoreById, createStore, editStoreInfo };
