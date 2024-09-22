@@ -9,10 +9,11 @@ type EditStoreInfoParams = {
 
 // Database connection configuration
 const dbConfig = {
-  host: process.env.NEXT_PUBLIC_MY_SQL_HOST,
-  user: process.env.NEXT_PUBLIC_MY_SQL_USER,
-  password: process.env.NEXT_PUBLIC_MY_SQL_PASSWORD,
-  database: process.env.NEXT_PUBLIC_MY_SQL_DATABASE,
+  host: process.env.NEXT_PUBLIC_MY_SQL_REMOTE_HOST,
+  user: process.env.NEXT_PUBLIC_MY_SQL_REMOTE_USER,
+  password: process.env.NEXT_PUBLIC_MY_SQL_REMOTE_PASSWORD,
+  database: process.env.NEXT_PUBLIC_MY_SQL_REMOTE_DATABASE,
+  port: Number(process.env.NEXT_PUBLIC_MY_SQL_REMOTE_PORT),
 };
 
 // Create a connection pool
@@ -90,7 +91,9 @@ const createStore = async (
 async function editStoreInfo(params: EditStoreInfoParams) {
   try {
     const { storeId, storeName = null, ownerName = null } = params;
-    const updatedOwnerName = ownerName ? JSON.stringify({ name: ownerName }) : null;
+    const updatedOwnerName = ownerName
+      ? JSON.stringify({ name: ownerName })
+      : null;
     const [result] = await pool.query<ResultSetHeader>(
       `
       UPDATE storeInfo
